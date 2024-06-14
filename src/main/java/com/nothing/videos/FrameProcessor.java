@@ -1,66 +1,49 @@
 package com.nothing.videos;
 
-import com.nothing.VideoDisplay;
-import org.bytedeco.javacv.*;
+import org.bytedeco.javacv.CanvasFrame;
+import org.bytedeco.javacv.FFmpegFrameGrabber;
+import org.bytedeco.javacv.Frame;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class FrameProcessor implements Runnable{
-    private final BlockingQueue<byte[]> frameQueue;
-    private VideoDisplay videoDisplay;
+    private static final int BUFFER_SIZE = 1024 * 1024 * 10;  // Adjust this value
+    private static final double FRAME_RATE = 60.0;  // Adjust this value
 
     BufferedOutputStream bos;
     BufferedInputStream bis;
+
     public FrameProcessor() throws IOException {
-        this.frameQueue = new LinkedBlockingQueue<>();
-
-
-        PipedOutputStream pos=new PipedOutputStream();
-        bos=new BufferedOutputStream(pos,1024*1024*10);
-        PipedInputStream pis=new PipedInputStream(pos);
-        bis=new BufferedInputStream(pis,1024*1024*10);
+        PipedOutputStream pos = new PipedOutputStream();
+        bos = new BufferedOutputStream(pos, BUFFER_SIZE);
+        PipedInputStream pis = new PipedInputStream(pos);
+        bis = new BufferedInputStream(pis, BUFFER_SIZE);
 
         Thread thread = new Thread(this);
         thread.start();
-
     }
 
-    public synchronized void addFrame(byte[] frameData) throws InterruptedException, IOException {
-        frameQueue.put(frameData);
+    public void addFrame(byte[] frameData) throws IOException {
         bos.write(frameData);
         bos.write(0);
         bos.flush();
-        notify();
     }
-    public synchronized byte[] getFrame() throws InterruptedException {
-        while (frameQueue.isEmpty()) {
-            wait();
-        }
-        return frameQueue.take();
-    }
-
 
     @Override
     public void run() {
         try {
-            //用swing 显示图片
-            FFmpegFrameGrabber grabber=new FFmpegFrameGrabber(bis);
+            FFmpegFrameGrabber grabber = new FFmpegFrameGrabber(bis);
             grabber.setFormat("h264");
-            grabber.setFrameRate(120);
+            grabber.setFrameRate(FRAME_RATE);
             grabber.start(false);
 
-            CanvasFrame videoDisplay = new CanvasFrame("hello",CanvasFrame.getDefaultGamma()/grabber.getGamma());
-            videoDisplay.setSize(grabber.getImageWidth(),grabber.getImageHeight());
+            CanvasFrame videoDisplay = new CanvasFrame("hello", CanvasFrame.getDefaultGamma() / grabber.getGamma());
+            videoDisplay.setSize(grabber.getImageWidth(), grabber.getImageHeight());
 
-
-            Frame frame=null;
-            while (true){
-                frame=grabber.grabImage();
-                if(frame!=null){
+            Frame frame;
+            while (true) {
+                frame = grabber.grabImage();
+                if (frame != null) {
                     videoDisplay.showImage(frame);
                 }
             }
@@ -68,5 +51,4 @@ public class FrameProcessor implements Runnable{
             throw new RuntimeException(e);
         }
     }
-
 }

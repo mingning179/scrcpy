@@ -32,7 +32,8 @@ dependencies {
     compileOnly("org.projectlombok:lombok:1.18.22")
 
     //javacv
-    implementation("org.bytedeco:javacv-platform:1.5.6")
+    implementation("org.bytedeco:javacv-platform:1.5.10")
+    implementation("org.bytedeco:javacv:1.5.10")
 }
 
 tasks.test {
