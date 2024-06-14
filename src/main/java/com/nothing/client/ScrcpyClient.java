@@ -14,7 +14,7 @@ public class ScrcpyClient implements Runnable{
     private final String SERVER_CLASS = "app_process / com.genymobile.scrcpy.Server";
     private final String SERVER_VERSION = "2.4";
     public final int SERVER_PORT = 27183;
-    private final int MAX_SIZE = 1920;
+    private final int MAX_SIZE = 800;
     private final String LOG_LEVEL = "debug";
     private Thread scrcpyServerThread = null;
 

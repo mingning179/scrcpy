@@ -49,7 +49,7 @@ public class VideoHandler implements Runnable {
             // Read the packet data
             byte[] packetData = new byte[packetSize];
             dis.readFully(packetData);
-            System.out.printf("isConfigPacket=%s,isKeyFrame=%s,pts=%d,packetSize=%d \n", isConfigPacket, isKeyFrame, pts, packetSize);
+
             frameProcessor.addFrame(packetData);
         }
     }
