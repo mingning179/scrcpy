@@ -2,24 +2,54 @@ package com.nothing.client;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class ScrcpyClient {
-    private static String resourcePath = System.getProperty("user.dir") + "/src/main/resources/";
+public class ScrcpyClient implements Runnable{
+    private final String resourcePath = System.getProperty("user.dir") + "/src/main/resources/";
 
-    private static final String SERVER_JAR = "/data/local/tmp/scrcpy-server.jar";
-    private static final String SERVER_CLASS = "app_process / com.genymobile.scrcpy.Server";
-    private static final String SERVER_VERSION = "2.4";
-    public static final int SERVER_PORT = 27183;
-    private static int MAX_SIZE = 1920;
-    private static String LOG_LEVEL = "debug";
-    private static Thread scrcpyServerThread = null;
+    private final String SERVER_JAR = "/data/local/tmp/scrcpy-server.jar";
+    private final String SERVER_CLASS = "app_process / com.genymobile.scrcpy.Server";
+    private final String SERVER_VERSION = "2.4";
+    public final int SERVER_PORT = 27183;
+    private final int MAX_SIZE = 1920;
+    private final String LOG_LEVEL = "debug";
+    private Thread scrcpyServerThread = null;
 
-    private static boolean serverStarted = false;
-    private static Object waitObj = new Object();
+    private boolean serverStarted = false;
+    private final Object waitObj = new Object();
 
-    public static boolean startServer() {
+    private Map<String, String> options = new LinkedHashMap<>();
+
+    public ScrcpyClient() {
+        // Default options
+        options.put("tunnel_forward", "true");
+        options.put("log_level", LOG_LEVEL);
+        options.put("video", "true");
+        options.put("audio", "false");
+        options.put("control", "false");
+        options.put("max_size", String.valueOf(MAX_SIZE));
+    }
+
+    public void setOption(String key, String value) {
+        options.put(key, value);
+    }
+
+    public Socket getVideoSocket() throws IOException {
+        return new Socket("localhost", SERVER_PORT);
+    }
+
+    public Socket getAudioSocket() throws IOException {
+        return new Socket("localhost", SERVER_PORT);
+    }
+
+    public Socket getControlSocket() throws IOException {
+        return new Socket("localhost", SERVER_PORT);
+    }
+
+    public boolean startServer() {
         // 关闭scrcpy服务,防止端口占用
         try {
             stopServer();
@@ -27,12 +57,7 @@ public class ScrcpyClient {
             e.printStackTrace();
         }
         //开启线程启动scrcpy服务
-        scrcpyServerThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                startServer(LOG_LEVEL, MAX_SIZE);
-            }
-        });
+        scrcpyServerThread = new Thread(this);
         scrcpyServerThread.start();
         synchronized (waitObj) {
             try {
@@ -45,7 +70,7 @@ public class ScrcpyClient {
         }
     }
 
-    private static void startServer(String logLevel, int maxSize){
+    public void run() {
         try {
             ExeResult ret;
             ret = execCmd("adb", "push", resourcePath + "scrcpy-server", SERVER_JAR);
@@ -58,13 +83,6 @@ public class ScrcpyClient {
                 throw new RuntimeException("forward port failed " + ret.getOut());
             }
             //服务端启动参数
-            Map<String, String> options = Map.of(
-                    "tunnel_forward", "true",
-                    "log_level", logLevel,
-                    "video", "true",
-                    "audio", "false",
-                    "control", "false",
-                    "max_size", String.valueOf(maxSize));
             String optionsStr = String.join(" ", options.entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).toArray(String[]::new));
             String command = String.format("adb shell CLASSPATH=%s %s %s %s",
                     SERVER_JAR, SERVER_CLASS, SERVER_VERSION, optionsStr);
@@ -89,7 +107,7 @@ public class ScrcpyClient {
     /**
      * 停止scrcpy服务
      */
-    private static void stopServer() {
+    private void stopServer() {
         if (scrcpyServerThread != null) {
             scrcpyServerThread.interrupt();
             scrcpyServerThread = null;
@@ -118,7 +136,7 @@ public class ScrcpyClient {
      * @throws IOException
      * @throws InterruptedException
      */
-    private static ExeResult execCmd(boolean transferToConsole, String... cmd) throws IOException, InterruptedException {
+    private ExeResult execCmd(boolean transferToConsole, String... cmd) throws IOException, InterruptedException {
         Process process = null;
         int ret = -1;
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -144,7 +162,15 @@ public class ScrcpyClient {
      * @throws IOException
      * @throws InterruptedException
      */
-    private static ExeResult execCmd(String... cmd) throws IOException, InterruptedException {
+    private ExeResult execCmd(String... cmd) throws IOException, InterruptedException {
         return execCmd(false, cmd);
+    }
+
+    public boolean isSend_device_meta() {
+        return Boolean.parseBoolean(options.getOrDefault("send_device_meta", "true"))
+                && !isRawStream();
+    }
+    public boolean isRawStream() {
+        return Boolean.parseBoolean(options.get("raw_stream"));
     }
 }

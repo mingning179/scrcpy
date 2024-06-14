@@ -1,5 +1,6 @@
 package com.nothing.handler;
 
+import com.nothing.client.ScrcpyClient;
 import com.nothing.videos.FrameProcessor;
 
 import java.io.DataInputStream;
@@ -8,14 +9,16 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 
 public class VideoHandler implements Runnable {
+    private final ScrcpyClient scrcpyClient;
+    private final Socket socket;
     private DataInputStream dis;
-    private Socket socket;
     private String codec;
     private int width;
     private int height;
     private FrameProcessor frameProcessor;
 
-    public VideoHandler(Socket socket,FrameProcessor frameProcessor) throws IOException {
+    public VideoHandler(ScrcpyClient scrcpyClient,Socket socket, FrameProcessor frameProcessor) throws IOException {
+        this.scrcpyClient = scrcpyClient;
         this.socket = socket;
         this.dis = new DataInputStream(socket.getInputStream());
         this.frameProcessor= frameProcessor;
@@ -35,7 +38,6 @@ public class VideoHandler implements Runnable {
             // Read the frame header
             byte[] header = new byte[12];
             dis.readFully(header);
-
             // Extract the flags and PTS from the header
             boolean isConfigPacket = (header[0] & 0x80) != 0;
             boolean isKeyFrame = (header[0] & 0x40) != 0;
@@ -47,6 +49,7 @@ public class VideoHandler implements Runnable {
             // Read the packet data
             byte[] packetData = new byte[packetSize];
             dis.readFully(packetData);
+            System.out.printf("isConfigPacket=%s,isKeyFrame=%s,pts=%d,packetSize=%d \n", isConfigPacket, isKeyFrame, pts, packetSize);
             frameProcessor.addFrame(packetData);
         }
     }
@@ -55,9 +58,8 @@ public class VideoHandler implements Runnable {
         byte[] datas = new byte[4];
         dis.readFully(datas);
         codec = new String(datas, 0, 4);
-
         width = dis.readInt();
         height = dis.readInt();
-        System.out.printf("codec=%s,width=%d,height=%d", codec, width, height);
+        System.out.printf("codec=%s,width=%d,height=%d \n", codec, width, height);
     }
 }
