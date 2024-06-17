@@ -1,13 +1,12 @@
 package com.nothing;
 
 import com.nothing.client.ScrcpyClient;
+import com.nothing.handler.AudioHandler;
+import com.nothing.handler.ControlHandler;
 import com.nothing.handler.VideoHandler;
 import com.nothing.videos.FrameProcessor;
 
-import java.io.DataInputStream;
 import java.io.IOException;
-import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 
 public class MainProcess {
     public static void main(String[] args) throws InterruptedException, IOException {
@@ -22,56 +21,22 @@ public class MainProcess {
 
         FrameProcessor frameProcessor = new FrameProcessor();
         try {
-            // Open three sockets to the same address
-            Socket videoSocket = scrcpyClient.getVideoSocket();
-            Socket audioSocket = scrcpyClient.getAudioSocket();
-            Socket controlSocket = scrcpyClient.getControlSocket();
-
-            // 验证 dummyByte 以及解析 deviceMeta
-            String deviceMeta= processFirstByteAndGetDeviceMeta(videoSocket);
-            System.out.printf("deviceMeta=%s\n", deviceMeta);
-
             // 视屏处理器
-            VideoHandler videoHandler = new VideoHandler(scrcpyClient,videoSocket,frameProcessor);
+            VideoHandler videoHandler = new VideoHandler(scrcpyClient,frameProcessor);
             new Thread(videoHandler).start();
 
-//            // 音频处理器
-//            AudioHandler audioHandler = new AudioHandler(scrcpyClient,audioSocket);
-//            new Thread(audioHandler).start();
-//
-//            // 控制处理器
-//            ControlHandler controlHandler = new ControlHandler(scrcpyClient,controlSocket);
-//            new Thread(controlHandler).start();
+            // 音频处理器
+            AudioHandler audioHandler = new AudioHandler(scrcpyClient);
+            new Thread(audioHandler).start();
 
-        } catch (IOException e) {
+            // 控制处理器
+            ControlHandler controlHandler = new ControlHandler(scrcpyClient);
+            new Thread(controlHandler).start();
+
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    /**
-     * 验证 dummyByte 以及解析 deviceMeta
-     *
-     * @param socket
-     * @return
-     * @throws IOException
-     */
-    private static String processFirstByteAndGetDeviceMeta(Socket socket) throws IOException {
-        DataInputStream in = new DataInputStream(socket.getInputStream());
-        byte firstByte = in.readByte();
-        if (firstByte != 0) {
-            throw new RuntimeException("first byte is not 0:" + firstByte);
-        }
-        //read deviceMeta
-        byte[] deviceMeta = new byte[64];
-        in.readFully(deviceMeta);
-        // Find the first zero byte
-        int zeroByteIndex = 0;
-        for (; zeroByteIndex < 64; zeroByteIndex++) {
-            if (deviceMeta[zeroByteIndex] == 0) {
-                break;
-            }
-        }
-        String deviceMetaString = new String(deviceMeta, 0, zeroByteIndex, StandardCharsets.UTF_8);
-        return deviceMetaString;
-    }
+
 }

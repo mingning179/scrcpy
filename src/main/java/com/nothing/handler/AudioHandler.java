@@ -11,9 +11,9 @@ public class AudioHandler implements Runnable{
     private final Socket socket;
     private DataInputStream dis;
 
-    public AudioHandler(ScrcpyClient scrcpyClient, Socket socket) throws IOException {
+    public AudioHandler(ScrcpyClient scrcpyClient) throws IOException {
         this.scrcpyClient=scrcpyClient;
-        this.socket=socket;
+        this.socket=scrcpyClient.getAudioSocket();
         this.dis=new DataInputStream(socket.getInputStream());
     }
     @Override

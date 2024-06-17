@@ -1,12 +1,13 @@
 package com.nothing.client;
 
+import lombok.Data;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
 public class ScrcpyClient implements Runnable{
     private final String resourcePath = System.getProperty("user.dir") + "/src/main/resources/";
 
@@ -14,39 +15,93 @@ public class ScrcpyClient implements Runnable{
     private final String SERVER_CLASS = "app_process / com.genymobile.scrcpy.Server";
     private final String SERVER_VERSION = "2.4";
     public final int SERVER_PORT = 27183;
-    private final int MAX_SIZE = 800;
+    private final int MAX_SIZE = 960;
     private final String LOG_LEVEL = "debug";
     private Thread scrcpyServerThread = null;
 
     private boolean serverStarted = false;
     private final Object waitObj = new Object();
-
     private Map<String, String> options = new LinkedHashMap<>();
+
+    private boolean video=true;
+    private boolean audio=true;
+    private boolean control=true;
+    private boolean sendDeviceMeta=true;
+    private boolean sendDummyByte=true;
+    private boolean sendCodecMeta=true;
+    private boolean sendFrameMeta=true;
+
+    private Socket videoSocket;
+    private Socket audioSocket;
+    private Socket controlSocket;
 
     public ScrcpyClient() {
         // Default options
         options.put("tunnel_forward", "true");
         options.put("log_level", LOG_LEVEL);
         options.put("video", "true");
-        options.put("audio", "false");
-        options.put("control", "false");
+        options.put("audio", "true");
+        options.put("control", "true");
+
+        options.put("send_device_meta", "true");
+        options.put("send_dummy_byte", "true");
+        options.put("send_codec_meta", "true");
+        options.put("send_frame_meta", "false");
         options.put("max_size", String.valueOf(MAX_SIZE));
+
+
+        if(options.get("video").equals("false")){
+            video=false;
+        }
+        if(options.get("audio").equals("false")){
+            audio=false;
+        }
+        if(options.get("control").equals("false")){
+            control=false;
+        }
+
+        if(options.get("send_device_meta").equals("false")){
+            sendDeviceMeta=false;
+        }
+        if(options.get("send_dummy_byte").equals("false")){
+            sendDummyByte=false;
+        }
+        if(options.get("send_codec_meta").equals("false")){
+            sendCodecMeta=false;
+        }
+        if(options.get("send_frame_meta").equals("false")){
+            sendFrameMeta=false;
+        }
+
+    }
+    public Socket getVideoSocket()  {
+        if(!serverStarted){
+            throw new RuntimeException("server is not started");
+        }
+        if(!video){
+            throw new RuntimeException("video is not supported");
+        }
+        return videoSocket;
     }
 
-    public void setOption(String key, String value) {
-        options.put(key, value);
+    public Socket getAudioSocket()   {
+        if(!serverStarted){
+            throw new RuntimeException("server is not started");
+        }
+        if(!audio){
+            throw new RuntimeException("audio is not supported");
+        }
+        return audioSocket;
     }
 
-    public Socket getVideoSocket() throws IOException {
-        return new Socket("localhost", SERVER_PORT);
-    }
-
-    public Socket getAudioSocket() throws IOException {
-        return new Socket("localhost", SERVER_PORT);
-    }
-
-    public Socket getControlSocket() throws IOException {
-        return new Socket("localhost", SERVER_PORT);
+    public Socket getControlSocket()   {
+        if(!serverStarted){
+            throw new RuntimeException("server is not started");
+        }
+        if(!control){
+            throw new RuntimeException("control is not supported");
+        }
+        return controlSocket;
     }
 
     public boolean startServer() {
@@ -63,8 +118,33 @@ public class ScrcpyClient implements Runnable{
             try {
                 waitObj.wait();
                 Thread.sleep(2 * 1000);
+                initSocket();
                 return serverStarted;
             } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    private void initSocket() {
+        if(video){
+            try {
+                videoSocket = new Socket("localhost", SERVER_PORT);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        if(audio){
+            try {
+                audioSocket = new Socket("localhost", SERVER_PORT);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        if(control){
+            try {
+                controlSocket = new Socket("localhost", SERVER_PORT);
+            } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -166,11 +246,16 @@ public class ScrcpyClient implements Runnable{
         return execCmd(false, cmd);
     }
 
-    public boolean isSend_device_meta() {
-        return Boolean.parseBoolean(options.getOrDefault("send_device_meta", "true"))
-                && !isRawStream();
+    public boolean isSendDummyByte() {
+        return sendDummyByte;
     }
-    public boolean isRawStream() {
-        return Boolean.parseBoolean(options.get("raw_stream"));
+    public boolean isSendDeviceMeta() {
+        return sendDeviceMeta;
+    }
+    public boolean isSendCodecMeta() {
+        return sendCodecMeta;
+    }
+    public boolean isSendFrameMeta() {
+        return sendFrameMeta;
     }
 }

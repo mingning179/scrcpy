@@ -14,9 +14,9 @@ public class ControlHandler implements Runnable{
     private DataOutputStream dos;
 
 
-    public ControlHandler(ScrcpyClient scrcpyClient,Socket socket) throws IOException {
+    public ControlHandler(ScrcpyClient scrcpyClient) throws IOException {
         this.scrcpyClient=scrcpyClient;
-        this.socket=socket;
+        this.socket=scrcpyClient.getControlSocket();
         this.dis=new DataInputStream(socket.getInputStream());
         this.dos=new DataOutputStream(socket.getOutputStream());
     }
