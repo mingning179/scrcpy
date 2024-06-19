@@ -1,8 +1,7 @@
 package com.nothing.client;
 
-import lombok.Data;
-
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -21,7 +20,7 @@ public class ScrcpyClient implements Runnable{
 
     private boolean serverStarted = false;
     private final Object waitObj = new Object();
-    private Map<String, String> options = new LinkedHashMap<>();
+    private final Map<String, String> options = new LinkedHashMap<>();
 
     private boolean video=true;
     private boolean audio=true;
@@ -34,6 +33,12 @@ public class ScrcpyClient implements Runnable{
     private Socket videoSocket;
     private Socket audioSocket;
     private Socket controlSocket;
+
+    private DataInputStream dis;
+    private String codec;
+    private int videoWidth;
+    private int videoHeight;
+    private String deviceMeta = "unknown";
 
     public ScrcpyClient() {
         // Default options
@@ -148,6 +153,14 @@ public class ScrcpyClient implements Runnable{
                 throw new RuntimeException(e);
             }
         }
+
+        try {
+            dis=new DataInputStream(videoSocket.getInputStream());
+            processFirstByteAndGetDeviceMeta();
+            readCodecMetadata();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void run() {
@@ -246,16 +259,57 @@ public class ScrcpyClient implements Runnable{
         return execCmd(false, cmd);
     }
 
-    public boolean isSendDummyByte() {
-        return sendDummyByte;
+
+
+    /**
+     * 验证 dummyByte 以及解析 deviceMeta
+     *
+     * @return
+     * @throws IOException
+     */
+    private String processFirstByteAndGetDeviceMeta() throws IOException {
+        if (sendDummyByte) {
+            byte firstByte = dis.readByte();
+            if (firstByte != 0) {
+                throw new RuntimeException("first byte is not 0:" + firstByte);
+            }
+        }
+        if (sendDeviceMeta) {
+            //read deviceMeta
+            byte[] deviceMetaBytes = new byte[64];
+            dis.readFully(deviceMetaBytes);
+            // Find the first zero byte
+            int zeroByteIndex = 0;
+            for (; zeroByteIndex < 64; zeroByteIndex++) {
+                if (deviceMetaBytes[zeroByteIndex] == 0) {
+                    break;
+                }
+            }
+            deviceMeta = new String(deviceMetaBytes, 0, zeroByteIndex, StandardCharsets.UTF_8);
+        }
+        return deviceMeta;
     }
-    public boolean isSendDeviceMeta() {
-        return sendDeviceMeta;
+
+    private void readCodecMetadata() throws IOException {
+        if (sendCodecMeta) {
+            byte[] datas = new byte[4];
+            dis.readFully(datas);
+            codec = new String(datas, 0, 4);
+            videoWidth = dis.readInt();
+            videoHeight = dis.readInt();
+            System.out.printf("codec=%s,width=%d,height=%d \n", codec, videoWidth, videoHeight);
+        }
     }
-    public boolean isSendCodecMeta() {
-        return sendCodecMeta;
+
+    public String getDeviceMeta() {
+        return deviceMeta;
     }
-    public boolean isSendFrameMeta() {
-        return sendFrameMeta;
+
+    public int getVideoWidth() {
+        return videoWidth;
+    }
+
+    public int getVideoHeight() {
+        return videoHeight;
     }
 }

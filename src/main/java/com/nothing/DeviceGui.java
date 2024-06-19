@@ -30,7 +30,12 @@ public class DeviceGui extends CanvasFrame {
         videoHandler=new VideoHandler(scrcpyClient, this);
         audioHandler=new AudioHandler(scrcpyClient, this);
         controlHandler=new ControlHandler(scrcpyClient, this);
+        super.canvas.addMouseListener(controlHandler);
+        super.canvas.addMouseMotionListener(controlHandler);
 
+        setTitle(scrcpyClient.getDeviceMeta());
+        setSize(scrcpyClient.getVideoWidth(),scrcpyClient.getVideoHeight());
+        setVisible(true);
         // 视屏处理器
         new Thread(videoHandler).start();
         // 音频处理器
@@ -39,8 +44,7 @@ public class DeviceGui extends CanvasFrame {
         new Thread(controlHandler).start();
     }
 
-
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try {
                 DeviceGui deviceGui = new DeviceGui("DeviceGui");
