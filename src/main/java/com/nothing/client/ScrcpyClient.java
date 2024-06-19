@@ -54,6 +54,8 @@ public class ScrcpyClient implements Runnable{
         options.put("send_frame_meta", "false");
         options.put("max_size", String.valueOf(MAX_SIZE));
 
+//        options.put("show_touches", "true");
+        options.put("stay_awake", "true");
 
         if(options.get("video").equals("false")){
             video=false;
