@@ -43,7 +43,7 @@ public class ControlHandler extends MouseAdapter implements Runnable  {
         }
     }
 
-    private void injectTouchEvent(int action, MouseEvent e) {
+    public void injectTouchEvent(int action, MouseEvent e) {
         try {
             ByteBuffer buffer = ByteBuffer.allocate(32); // Allocate a ByteBuffer with the necessary capacity
 
@@ -58,8 +58,11 @@ public class ControlHandler extends MouseAdapter implements Runnable  {
             buffer.putInt(MotionEvent.BUTTON_PRIMARY); // action button
             buffer.putInt(MotionEvent.BUTTON_PRIMARY); // buttons
 
-            dos.write(buffer.array());
+            byte[] data=buffer.array();
+            dos.write(data);
             dos.flush();
+
+            deviceGui.recodeOperation(data);
         } catch (IOException ex) {
             handleException(ex);
         }
