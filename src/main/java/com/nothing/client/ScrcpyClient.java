@@ -46,7 +46,10 @@ public class ScrcpyClient implements Runnable{
         options.put("log_level", LOG_LEVEL);
         options.put("video", "true");
         options.put("audio", "true");
+        options.put("audio_codec","raw");
         options.put("control", "true");
+
+
 
         options.put("send_device_meta", "true");
         options.put("send_dummy_byte", "true");

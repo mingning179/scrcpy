@@ -5,7 +5,6 @@ import com.nothing.handler.AudioHandler;
 import com.nothing.handler.VideoHandler;
 import com.nothing.handler.control.ControlHandler;
 import org.bytedeco.javacv.CanvasFrame;
-import org.bytedeco.javacv.Frame;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -14,7 +13,6 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 
 public class DeviceGui extends CanvasFrame {
     VideoHandler videoHandler;

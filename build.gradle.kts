@@ -30,12 +30,11 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     //lombok
     compileOnly("org.projectlombok:lombok:1.18.22")
+    implementation("ch.qos.logback:logback-classic:1.2.6")
 
     //javacv
     implementation("org.bytedeco:javacv-platform:1.5.10")
     implementation("org.bytedeco:javacv:1.5.10")
-
-    implementation("ch.qos.logback:logback-classic:1.2.6")
 }
 
 tasks.test {
