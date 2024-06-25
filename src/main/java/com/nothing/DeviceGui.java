@@ -21,7 +21,7 @@ public class DeviceGui extends CanvasFrame {
     private boolean train=false;
 
     public DeviceGui(String title) throws IOException {
-        super(title);
+        super(title, 1.0);
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
     }
 
@@ -86,7 +86,7 @@ public class DeviceGui extends CanvasFrame {
             try {
                 DeviceGui deviceGui = new DeviceGui("DeviceGui");
                 deviceGui.setVisible(false);
-                deviceGui.start(true);
+                deviceGui.start(false);
             } catch (IOException e) {
                 e.printStackTrace();
             }
