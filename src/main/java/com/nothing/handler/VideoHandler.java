@@ -34,6 +34,13 @@ public class VideoHandler implements Runnable {
             grabber.setImageHeight(scrcpyClient.getVideoHeight());
             grabber.start(false);   //开始获取摄像头数据
 
+            //等待窗口可见
+            while (true) {
+                if (deviceGui.isVisible()) {
+                    break;
+                }
+                Thread.sleep(10);
+            }
             //计算帧率
             long start = System.currentTimeMillis();
             int count = 0;
@@ -46,17 +53,12 @@ public class VideoHandler implements Runnable {
                     count = 0;
                     start = end;
                 }
-                if (!deviceGui.isVisible()) {
-                    break;
+
+                Frame frame = grabber.grabImage();
+                if (frame != null) {
+                    deviceGui.showImage(frame);
                 }
-                Frame frame = grabber.grabAtFrameRate();
-                if (frame == null) {
-                    continue;
-                }
-                deviceGui.showImage(frame);
             }
-        } catch (FFmpegFrameGrabber.Exception e) {
-            throw new RuntimeException(e);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

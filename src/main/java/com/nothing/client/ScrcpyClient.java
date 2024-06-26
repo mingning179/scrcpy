@@ -45,11 +45,10 @@ public class ScrcpyClient implements Runnable{
         options.put("tunnel_forward", "true");
         options.put("log_level", LOG_LEVEL);
         options.put("video", "true");
+        options.put("video_codec","h264");
         options.put("audio", "true");
         options.put("audio_codec","raw");
         options.put("control", "true");
-
-
 
         options.put("send_device_meta", "true");
         options.put("send_dummy_byte", "true");
@@ -57,7 +56,6 @@ public class ScrcpyClient implements Runnable{
         options.put("send_frame_meta", "false");
         options.put("max_size", String.valueOf(MAX_SIZE));
 
-//        options.put("show_touches", "true");
         options.put("stay_awake", "true");
 
         if(options.get("video").equals("false")){
