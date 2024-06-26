@@ -32,8 +32,7 @@ public class VideoHandler implements Runnable {
             grabber.setVideoCodec(avcodec.AV_CODEC_ID_H264);
             grabber.setImageWidth(scrcpyClient.getVideoWidth());
             grabber.setImageHeight(scrcpyClient.getVideoHeight());
-            grabber.start(false);   //开始获取摄像头数据
-
+            grabber.start(false);// 开始之后就可以获取帧了
             //等待窗口可见
             while (true) {
                 if (deviceGui.isVisible()) {
