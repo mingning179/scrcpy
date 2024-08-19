@@ -45,16 +45,16 @@ public class VideoHandler implements Runnable {
             int count = 0;
 
             while (true) {
-                count++;
-                long end = System.currentTimeMillis();
-                if (end - start >= 1000) {
-                    System.out.println("帧率：" + count);
-                    count = 0;
-                    start = end;
-                }
-
                 Frame frame = grabber.grabImage();
+                grabber.setCloseInputStream(true);
                 if (frame != null) {
+                    count++;
+                    long end = System.currentTimeMillis();
+                    if (end - start >= 1000) {
+                        System.out.println("帧率：" + count);
+                        count = 0;
+                        start = end;
+                    }
                     deviceGui.showImage(frame);
                 }
             }
